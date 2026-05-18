@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/plugin-syntax-jsx": "^7.28.6",
+    "@babel/preset-typescript": "^7.28.5"
+  }
+}

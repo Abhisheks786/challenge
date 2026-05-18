@@ -1,25 +1,25 @@
-// client/src/layout/MobileBottomSheet.tsx
+// client/src/layout/MobileBottomSheet.js
 // ─────────────────────────────────────────────────────────────────────────────
 // Slide-up bottom sheet for mobile — shows the Election Dashboard.
 // Uses CSS transforms for animation; no external animation library.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef } from 'react';
 import { ElectionDashboard } from '../dashboard/ElectionDashboard';
-import { useElectionStore }  from '../store/useElectionStore';
+import { useElectionStore } from '../store/useElectionStore';
 
 export function MobileBottomSheet() {
-  const open    = useElectionStore((s) => s.bottomSheetOpen);
+  const open = useElectionStore((s) => s.bottomSheetOpen);
   const setOpen = useElectionStore((s) => s.setBottomSheetOpen);
-  const sheetRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef(null);
 
   // Close on backdrop click
-  const handleBackdropClick = (e: React.MouseEvent) => {
+  const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) setOpen(false);
   };
 
   // Close on Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const handler = (e) => {
       if (e.key === 'Escape') setOpen(false);
     };
     document.addEventListener('keydown', handler);
@@ -36,8 +36,8 @@ export function MobileBottomSheet() {
           transition-opacity duration-300
           ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
         `}
-        onClick={handleBackdropClick}
-      />
+        onClick={handleBackdropClick} />
+      
 
       {/* Sheet */}
       <div
@@ -49,8 +49,8 @@ export function MobileBottomSheet() {
           flex flex-col overflow-hidden
           transition-transform duration-300 ease-out
           ${open ? 'translate-y-0' : 'translate-y-full'}
-        `}
-      >
+        `}>
+        
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-10 h-1 rounded-full bg-neutral-600" />
@@ -61,8 +61,8 @@ export function MobileBottomSheet() {
           <h2 className="text-sm font-semibold text-white">Election Dashboard</h2>
           <button
             onClick={() => setOpen(false)}
-            className="text-neutral-400 hover:text-white text-lg leading-none px-2"
-          >
+            className="text-neutral-400 hover:text-white text-lg leading-none px-2">
+            
             ✕
           </button>
         </div>
@@ -72,6 +72,6 @@ export function MobileBottomSheet() {
           <ElectionDashboard />
         </div>
       </div>
-    </>
-  );
+    </>);
+
 }
