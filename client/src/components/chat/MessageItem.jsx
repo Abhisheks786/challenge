@@ -5,10 +5,7 @@ import { User, Bot } from 'lucide-react';
 import { SkeletonMessage } from './SkeletonMessage';
 import { StreamingText } from './StreamingText';
 import { WidgetRenderer } from '../widgets/WidgetRenderer';
-
-
-
-
+import { CitationBubble } from './CitationBubble';
 
 export function MessageItem({ message }) {
   const isUser = message.role === 'user';
@@ -23,29 +20,34 @@ export function MessageItem({ message }) {
         
         {/* Message Content */}
         <div className="flex-1 min-w-0 flex flex-col gap-3">
-          {message.content &&
-          <div className="prose prose-invert prose-p:leading-relaxed max-w-none text-sm text-neutral-200 break-words">
-              {message.isStreaming ?
-            <StreamingText content={message.content} /> :
-
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-            }
+          {message.content && (
+            <div className="prose prose-invert prose-p:leading-relaxed max-w-none text-sm text-neutral-200 break-words flex flex-wrap items-end gap-1">
+              {message.isStreaming ? (
+                <StreamingText content={message.content} />
+              ) : (
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              )}
+              
+              {/* Citations */}
+              {!message.isStreaming && message.citations?.map((c, i) => (
+                <CitationBubble key={i} citation={c} />
+              ))}
             </div>
-          }
+          )}
           
           {/* Skeleton while streaming data widget */}
-          {message.isStreaming && !message.content && !message.widget &&
-          <SkeletonMessage />
-          }
+          {message.isStreaming && !message.content && !message.widget && (
+            <SkeletonMessage />
+          )}
 
           {/* Structured JSON Widget */}
-          {message.widget &&
-          <div className="mt-2 w-full">
+          {message.widget && (
+            <div className="mt-2 w-full">
               <WidgetRenderer payload={message.widget} />
             </div>
-          }
+          )}
         </div>
       </div>
-    </div>);
-
+    </div>
+  );
 }

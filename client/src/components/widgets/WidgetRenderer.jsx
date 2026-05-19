@@ -2,59 +2,40 @@ import React, { useState } from 'react';
 import { WidgetType } from '../../types';
 import { LocationInput } from './LocationInput';
 import { useElectionStore } from '../../store/useElectionStore';
+import { TimelineWidget } from './TimelineWidget';
+import { QuizWidget } from './QuizWidget';
 
 export function WidgetRenderer({ payload }) {
   switch (payload.type) {
 
     // ── Timeline ────────────────────────────────────────────────────────────
     case WidgetType.TIMELINE:
-      return (
-        <div className="bg-neutral-800/70 p-4 rounded-xl border border-neutral-700 mt-2">
-          <h4 className="font-semibold text-white mb-3 text-sm">{payload.title}</h4>
-          <div className="flex flex-col gap-3">
-            {payload.steps.map((step, idx) => (
-              <div key={step.id} className="flex gap-3 items-start">
-                {/* Step connector line */}
-                <div className="flex flex-col items-center shrink-0">
-                  <div className={`w-3 h-3 rounded-full mt-0.5 ${
-                    step.status === 'done'   ? 'bg-green-500' :
-                    step.status === 'active' ? 'bg-orange-500 animate-pulse ring-2 ring-orange-500/30' :
-                    'bg-neutral-600'
-                  }`} />
-                  {idx < payload.steps.length - 1 && (
-                    <div className="w-px h-6 bg-neutral-700 mt-1" />
-                  )}
-                </div>
-                <div className="pb-1">
-                  <p className={`text-sm font-medium ${
-                    step.status === 'done' ? 'text-green-400' :
-                    step.status === 'active' ? 'text-orange-300' : 'text-neutral-300'
-                  }`}>{step.title}</p>
-                  <p className="text-xs text-neutral-400 mt-0.5">{step.description}</p>
-                  {step.date && (
-                    <span className="text-[10px] text-neutral-500 mt-0.5 inline-block">{step.date}</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
+    case 'TIMELINE':
+      return <TimelineWidget data={payload.data || payload} title={payload.title} />;
+
+    // ── Quiz ────────────────────────────────────────────────────────────────
+    case 'QUIZ':
+      return <QuizWidget data={payload.data} />;
 
     // ── Checklist ────────────────────────────────────────────────────────────
     case WidgetType.CHECKLIST:
+    case 'CHECKLIST':
       return <ChecklistWidget payload={payload} />;
 
     // ── Quick Chips ──────────────────────────────────────────────────────────
     case WidgetType.QUICK_CHIPS:
+    case 'QUICK_CHIPS':
       return <QuickChipsWidget chips={payload.chips} />;
 
     // ── Location ────────────────────────────────────────────────────────────
     case WidgetType.LOCATION:
+    case 'LOCATION':
       return <LocationInput placeholder={payload.placeholder} />;
 
     default:
-      return null; // Silently ignore unknown widget types instead of showing [Unsupported Widget]
+      // In case we receive an unknown type, log it but don't crash
+      console.warn('Unknown widget type:', payload.type);
+      return null;
   }
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Send } from 'lucide-react';
-import { useElectionStore, selectIsStreaming, selectSessionId, selectPendingChips } from '../../store/useElectionStore';
+import { useElectionStore, selectIsStreaming, selectSessionId, selectPendingChips, selectSimplifyMode, selectCurrentPath } from '../../store/useElectionStore';
 import { useSSE } from '../../hooks/useSSE';
 
 export function ChatInput() {
@@ -9,6 +9,9 @@ export function ChatInput() {
   const isStreaming = useElectionStore(selectIsStreaming);
   const sessionId = useElectionStore(selectSessionId);
   const pendingChips = useElectionStore(selectPendingChips);
+  const simplifyMode = useElectionStore(selectSimplifyMode);
+  const currentPath = useElectionStore(selectCurrentPath);
+  
   const addUserMessage    = useElectionStore((s) => s.addUserMessage);
   const addAssistantMessage = useElectionStore((s) => s.addAssistantMessage);
   const finalizeMessage   = useElectionStore((s) => s.finalizeMessage);
@@ -35,7 +38,12 @@ export function ChatInput() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message: textToSend, sessionId })
+        body: JSON.stringify({ 
+          message: textToSend, 
+          sessionId, 
+          simplifyFor: simplifyMode ? 'eli5' : '', 
+          topicPath: currentPath 
+        })
       });
 
       const data = await response.json();
@@ -43,7 +51,7 @@ export function ChatInput() {
       if (data.streaming === false) {
         // Factual Query — instant JSON from DB/Redis, render widget immediately
         const msgId = addAssistantMessage();
-        finalizeMessage(msgId, data.widget);
+        finalizeMessage(msgId, data.widget, data.citations);
         // Also sync the right-panel dashboard if server sent context
         if (data.dashboard) applyDashboardUpdate(data.dashboard);
       } else if (data.streaming === true) {
@@ -100,5 +108,4 @@ export function ChatInput() {
         </span>
       </div>
     </div>);
-
 }
