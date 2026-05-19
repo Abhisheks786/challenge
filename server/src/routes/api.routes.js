@@ -4,6 +4,7 @@ import { ElectionEvent } from '../models/ElectionEvent.js';
 import { UserProgress } from '../models/UserProgress.js';
 import { Conversation } from '../models/Conversation.js';
 import { getCache, setCache, CACHE_TTL } from '../services/cache.service.js';
+import { getIsConnected } from '../config/db.js';
 
 const router = Router();
 
@@ -14,7 +15,7 @@ router.get('/election/:year/timeline', async (req, res) => {
     const cacheKey = `timeline:${year}`;
     
     let data = await getCache(cacheKey);
-    if (!data) {
+    if (!data && getIsConnected()) {
       data = await ElectionEvent.findOne({ year: Number(year) }).select('timeline').lean();
       if (data) await setCache(cacheKey, data, CACHE_TTL.TIMELINE);
     }
@@ -33,7 +34,7 @@ router.get('/election/:year/eligibility/:stateCode', async (req, res) => {
     const cacheKey = `eligibility:${year}:${stateCode}`;
     
     let data = await getCache(cacheKey);
-    if (!data) {
+    if (!data && getIsConnected()) {
       // Assuming stateCode lookup in ElectionEvent or static data;
       // here we fallback to general eligibility if state specific is not found.
       const event = await ElectionEvent.findOne({ year: Number(year) }).select('eligibility officialLinks').lean();
@@ -41,7 +42,7 @@ router.get('/election/:year/eligibility/:stateCode', async (req, res) => {
       if (event) await setCache(cacheKey, data, CACHE_TTL.ELIGIBILITY);
     }
     
-    if (data.error) return res.status(404).json({ error: 'Eligibility data not found' });
+    if (!data || data.error) return res.status(404).json({ error: 'Eligibility data not found' });
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
@@ -57,7 +58,7 @@ router.post('/quiz/submit', async (req, res) => {
     const correct = selectedAnswer === 'mock_correct_answer' || Math.random() > 0.5;
     const explanation = correct ? 'Correct! Well done.' : 'Incorrect. The right answer is X.';
     
-    if (userId) {
+    if (userId && getIsConnected()) {
       await UserProgress.findOneAndUpdate(
         { userId },
         { $push: { quizScores: { topic: 'General', score: correct ? 10 : 0, maxScore: 10 } } },
@@ -88,11 +89,13 @@ router.post('/bookmark', async (req, res) => {
     const { userId, messageId } = req.body;
     if (!userId || !messageId) return res.status(400).json({ error: 'Missing parameters' });
     
-    await UserProgress.findOneAndUpdate(
-      { userId },
-      { $addToSet: { bookmarkedMessageIds: messageId } },
-      { upsert: true }
-    );
+    if (getIsConnected()) {
+      await UserProgress.findOneAndUpdate(
+        { userId },
+        { $addToSet: { bookmarkedMessageIds: messageId } },
+        { upsert: true }
+      );
+    }
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
@@ -103,6 +106,9 @@ router.post('/bookmark', async (req, res) => {
 router.get('/conversation/:conversationId', async (req, res) => {
   try {
     const { conversationId } = req.params;
+    if (!getIsConnected()) {
+      return res.json({ success: true, data: { messages: [] } });
+    }
     const convo = await Conversation.findOne({ conversationId }).lean();
     
     if (!convo) return res.status(404).json({ error: 'Conversation not found' });

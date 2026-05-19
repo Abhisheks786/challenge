@@ -7,6 +7,7 @@
 import { classifyIntent, detectState, needsLLM } from '../services/intentRouter.js';
 import { ELECTION_DATA } from '../data/electionData.js';
 import { Conversation } from '../models/Conversation.js';
+import { getIsConnected } from '../config/db.js';
 
 // ── Widget builders ──────────────────────────────────────────────────────────
 
@@ -148,7 +149,7 @@ export const handleChat = async (req, res) => {
     const state    = stateKey ? ELECTION_DATA.states[stateKey] : null;
 
     // Save to DB if possible (async, don't await so we don't block response)
-    if (sessionId) {
+    if (sessionId && getIsConnected()) {
       Conversation.findOneAndUpdate(
         { conversationId: sessionId },
         { 
@@ -279,7 +280,7 @@ export const handleStream = async (req, res) => {
       })}\n\n`);
       
       // Save assistant message to DB
-      if (sessionId) {
+      if (sessionId && getIsConnected()) {
         Conversation.findOneAndUpdate(
           { conversationId: sessionId },
           { 
